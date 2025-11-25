@@ -14,121 +14,176 @@ export default function SellerListings() {
     }
 
     fetch(`http://localhost:4000/api/seller/${user.user_id}/listings`)
-      .then(res => res.json())
-      .then(data => {
+      .then((res) => res.json())
+      .then((data) => {
         setListings(data);
         setLoading(false);
       })
-      .catch(err => {
+      .catch((err) => {
         console.error(err);
         setLoading(false);
       });
   }, []);
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (!window.confirm("Delete this listing?")) return;
 
-    fetch(`http://localhost:4000/api/listings/${id}`, {
-      method: "DELETE"
-    })
-      .then(res => res.json())
-      .then(() => {
-        setListings(listings.filter(l => l.listing_id !== id));
-      })
-      .catch(err => console.error(err));
+    try {
+      const res = await fetch(`http://localhost:4000/api/listings/${id}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) {
+        alert("Error deleting listing");
+        return;
+      }
+
+      setListings((prev) => prev.filter((l) => l.listing_id !== id));
+    } catch (err) {
+      console.error(err);
+      alert("Error deleting listing");
+    }
   };
 
-  if (!user) return <h2>Please login first</h2>;
-  if (loading) return <div>Loading listings...</div>;
+  if (!user) return <div style={styles.page}>Please login first.</div>;
+  if (loading) return <div style={styles.page}>Loading listings...</div>;
 
   return (
-    <div style={{ padding: "30px" }}>
-      <h1>My Listings</h1>
-      <button
-        style={btn}
-        onClick={() => navigate("/seller/listings/new")}
-      >
-        + Create New Listing
-      </button>
+    <div style={styles.page}>
+      <div style={styles.container}>
+        <h1 style={styles.title}>My Listings</h1>
+        <p style={styles.subtitle}>
+          Manage all your cars in one place. You can edit, delete or add new listings.
+        </p>
 
-      {listings.length === 0 ? (
-        <p style={{ marginTop: "20px" }}>You have no listings yet.</p>
-      ) : (
-        <table style={tableStyle}>
-          <thead>
-            <tr>
-              <th style={thTd}>Title</th>
-              <th style={thTd}>Brand</th>
-              <th style={thTd}>Price</th>
-              <th style={thTd}>Status</th>
-              <th style={thTd}>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {listings.map(listing => (
-              <tr key={listing.listing_id}>
-                <td style={thTd}>{listing.title}</td>
-                <td style={thTd}>{listing.brand}</td>
-                <td style={thTd}>{listing.price}</td>
-                <td style={thTd}>{listing.status}</td>
-                <td style={thTd}>
-                  <button
-                    style={smallBtn}
-                    onClick={() =>
-                      navigate(`/seller/listings/edit/${listing.listing_id}`)
-                    }
-                  >
-                    Edit
-                  </button>
-                  <button
-                    style={smallBtnDanger}
-                    onClick={() => handleDelete(listing.listing_id)}
-                  >
-                    Delete
-                  </button>
-                </td>
+        <div style={{ marginBottom: "20px" }}>
+          <button style={styles.primaryBtn} onClick={() => navigate("/seller/listings/new")}>
+            + Create New Listing
+          </button>
+          <button
+            style={{ ...styles.secondaryBtn, marginLeft: "10px" }}
+            onClick={() => navigate("/seller/dashboard")}
+          >
+            ⬅ Back to Dashboard
+          </button>
+        </div>
+
+        {listings.length === 0 ? (
+          <p>You don’t have any listings yet.</p>
+        ) : (
+          <table style={styles.table}>
+            <thead>
+              <tr>
+                <th style={styles.thTd}>Title</th>
+                <th style={styles.thTd}>Brand</th>
+                <th style={styles.thTd}>Year</th>
+                <th style={styles.thTd}>Price (THB)</th>
+                <th style={styles.thTd}>Status</th>
+                <th style={styles.thTd}>Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+            </thead>
+            <tbody>
+              {listings.map((l) => (
+                <tr key={l.listing_id}>
+                  <td style={styles.thTd}>{l.title}</td>
+                  <td style={styles.thTd}>{l.brand}</td>
+                  <td style={styles.thTd}>{l.year}</td>
+                  <td style={styles.thTd}>{l.price}</td>
+                  <td style={styles.thTd}>{l.status}</td>
+                  <td style={styles.thTd}>
+                    <button
+                      style={styles.smallBtn}
+                      onClick={() => navigate(`/seller/listings/edit/${l.listing_id}`)}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      style={styles.smallDangerBtn}
+                      onClick={() => handleDelete(l.listing_id)}
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
     </div>
   );
 }
 
-const btn = {
-  marginTop: "10px",
-  padding: "8px 16px",
-  background: "#2979ff",
-  color: "#fff",
-  border: "none",
-  borderRadius: "6px",
-  cursor: "pointer"
-};
-
-const tableStyle = {
-  marginTop: "20px",
-  width: "100%",
-  borderCollapse: "collapse"
-};
-
-const thTd = {
-  border: "1px solid #ccc",
-  padding: "8px",
-  textAlign: "left"
-};
-
-const smallBtn = {
-  marginRight: "8px",
-  padding: "4px 10px",
-  background: "#4caf50",
-  color: "#fff",
-  border: "none",
-  borderRadius: "4px",
-  cursor: "pointer"
-};
-
-const smallBtnDanger = {
-  ...smallBtn,
-  background: "#e53935"
+const styles = {
+  page: {
+    minHeight: "100vh",
+    background: "#e0edff",
+    margin: 0,
+    padding: "40px 0",
+    display: "flex",
+    justifyContent: "center",
+  },
+  container: {
+    width: "100%",
+    maxWidth: "1200px",
+    padding: "0 40px",
+  },
+  title: {
+    fontSize: "40px",
+    color: "#0d47a1",
+    marginBottom: "5px",
+  },
+  subtitle: {
+    color: "#1565c0",
+    marginBottom: "20px",
+  },
+  table: {
+    width: "100%",
+    borderCollapse: "collapse",
+    background: "#fff",
+    borderRadius: "12px",
+    overflow: "hidden",
+    boxShadow: "0 4px 15px rgba(0,0,0,0.1)",
+  },
+  thTd: {
+    borderBottom: "1px solid #eee",
+    padding: "10px 12px",
+    textAlign: "left",
+    fontSize: "14px",
+  },
+  primaryBtn: {
+    padding: "10px 18px",
+    background: "#1e88e5",
+    color: "#fff",
+    border: "none",
+    borderRadius: "8px",
+    cursor: "pointer",
+  },
+  secondaryBtn: {
+    padding: "10px 18px",
+    background: "#ffffff",
+    color: "#1e88e5",
+    border: "1px solid #1e88e5",
+    borderRadius: "8px",
+    cursor: "pointer",
+  },
+  smallBtn: {
+    padding: "6px 10px",
+    marginRight: "6px",
+    background: "#4caf50",
+    color: "#fff",
+    border: "none",
+    borderRadius: "6px",
+    fontSize: "13px",
+    cursor: "pointer",
+  },
+  smallDangerBtn: {
+    padding: "6px 10px",
+    background: "#e53935",
+    color: "#fff",
+    border: "none",
+    borderRadius: "6px",
+    fontSize: "13px",
+    cursor: "pointer",
+  },
 };
