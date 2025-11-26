@@ -57,6 +57,9 @@ export default function SellerDashboard() {
           <button style={styles.button} onClick={() => navigate("/seller/listings/new")}>
             Create New Listing
           </button>
+          <button style={styles.inquiryButton} onClick={() => navigate("/seller/inquiries")}>
+            View Buyer Inquiries
+          </button>
         </div>
       </div>
     </div>
@@ -138,8 +141,19 @@ const styles = {
     transition: "0.2s",
   },
 
+    inquiryButton: {
+  padding: "14px 26px",
+  background: "#1e88e5",
+  color: "#fff",
+  border: "none",
+  borderRadius: "10px",
+  fontSize: "18px",
+  cursor: "pointer",
+  transition: "0.2s",
+},
   loading: {
     padding: "40px",
     fontSize: "24px",
+  
   },
 };

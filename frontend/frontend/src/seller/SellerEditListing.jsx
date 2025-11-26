@@ -1,20 +1,26 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 
 export default function SellerEditListing() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const user = JSON.parse(localStorage.getItem("user"));
 
-  const [form, setForm] = useState(null);
+  const [form, setForm] = useState({
+    title: "",
+    brand: "",
+    model: "",
+    year: "",
+    mileage: "",
+    price: "",
+    description: "",
+  });
+
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user || user.role !== "seller") {
-      navigate("/login");
-      return;
-    }
+    if (!id) return;
 
-    fetch(`http://localhost:4000/api/listings/${id}`)
+    fetch(`http://localhost:4000/api/seller/listings/item/${id}`)
       .then((res) => res.json())
       .then((data) => {
         setForm({
@@ -24,139 +30,68 @@ export default function SellerEditListing() {
           year: data.year,
           mileage: data.mileage,
           price: data.price,
-          description: data.description || "",
+          description: data.description,
         });
+        setLoading(false);
       })
-      .catch((err) => console.error(err));
+      .catch((err) => {
+        console.error("Fetch Error:", err);
+        setLoading(false);
+      });
   }, [id]);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
 
-    try {
-      const res = await fetch(`http://localhost:4000/api/listings/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: form.title,
-          brand: form.brand,
-          model: form.model,
-          year: Number(form.year),
-          mileage: Number(form.mileage),
-          price: Number(form.price),
-          description: form.description,
-        }),
-      });
-
-      if (!res.ok) {
-        alert("Error updating listing");
-        return;
-      }
-
-      await res.json();
-      navigate("/seller/listings");
-    } catch (err) {
-      console.error(err);
-      alert("Error updating listing");
-    }
+    fetch(`http://localhost:4000/api/seller/listings/item/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(form),
+    })
+      .then((res) => res.json())
+      .then(() => navigate("/seller/listings"))
+      .catch((err) => console.error(err));
   };
 
-  if (!form) {
-    return <div style={styles.page}>Loading listing...</div>;
-  }
+  if (loading) return <h2>Loading...</h2>;
 
   return (
-    <div style={styles.page}>
-      <div style={styles.container}>
-        <h1 style={styles.title}>Edit Listing</h1>
-        <p style={styles.subtitle}>Update the details of your car listing.</p>
+    <div style={{ padding: "40px", background: "#e8f1ff", minHeight: "100vh" }}>
+      <h1>Edit Listing</h1>
 
-        <form onSubmit={handleSubmit} style={styles.form}>
-          <label style={styles.label}>Title</label>
-          <input
-            style={styles.input}
-            name="title"
-            value={form.title}
-            onChange={handleChange}
-            required
-          />
-
-          <label style={styles.label}>Brand</label>
-          <input
-            style={styles.input}
-            name="brand"
-            value={form.brand}
-            onChange={handleChange}
-            required
-          />
-
-          <label style={styles.label}>Model</label>
-          <input
-            style={styles.input}
-            name="model"
-            value={form.model}
-            onChange={handleChange}
-          />
-
-          <label style={styles.label}>Year</label>
-          <input
-            style={styles.input}
-            name="year"
-            type="number"
-            value={form.year}
-            onChange={handleChange}
-          />
-
-          <label style={styles.label}>Mileage</label>
-          <input
-            style={styles.input}
-            name="mileage"
-            type="number"
-            value={form.mileage}
-            onChange={handleChange}
-          />
-
-          <label style={styles.label}>Price (THB)</label>
-          <input
-            style={styles.input}
-            name="price"
-            type="number"
-            value={form.price}
-            onChange={handleChange}
-            required
-          />
-
-          <label style={styles.label}>Description</label>
-          <textarea
-            style={{ ...styles.input, height: "80px" }}
-            name="description"
-            value={form.description}
-            onChange={handleChange}
-          />
-
-          <div style={{ marginTop: "20px" }}>
-            <button type="submit" style={styles.primaryBtn}>
-              Update Listing
-            </button>
-            <button
-              type="button"
-              style={styles.secondaryBtn}
-              onClick={() => navigate("/seller/listings")}
-            >
-              Cancel
-            </button>
-          </div>
-        </form>
-      </div>
+      <form onSubmit={handleSubmit} style={{ maxWidth: "600px" }}>
+        <input name="title" value={form.title} onChange={handleChange} placeholder="Title" style={styles.input} />
+        <input name="brand" value={form.brand} onChange={handleChange} placeholder="Brand" style={styles.input} />
+        <input name="model" value={form.model} onChange={handleChange} placeholder="Model" style={styles.input} />
+        <input name="year" value={form.year} onChange={handleChange} placeholder="Year" style={styles.input} />
+        <input name="mileage" value={form.mileage} onChange={handleChange} placeholder="Mileage" style={styles.input} />
+        <input name="price" value={form.price} onChange={handleChange} placeholder="Price" style={styles.input} />
+        <textarea name="description" value={form.description} onChange={handleChange} placeholder="Description" style={{ ...styles.input, height: "120px" }} />
+        <button style={styles.button}>Save Changes</button>
+      </form>
     </div>
   );
 }
 
 const styles = {
-  ...{ // reuse from NewListing
+  input: {
+    width: "100%",
+    padding: "12px",
+    margin: "10px 0",
+    borderRadius: "8px",
+    border: "1px solid #aac",
+  },
+  button: {
+    width: "100%",
+    padding: "14px",
+    background: "#1a73e8",
+    color: "#fff",
+    border: "none",
+    borderRadius: "8px",
+    marginTop: "20px",
   },
 };

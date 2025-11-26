@@ -36,7 +36,7 @@ export default function LoginPage() {
 
       // redirect ตาม role
       if (data.role === "admin") {
-        navigate("/admin/pending");
+        navigate("/admin/accounts");
       } else if (data.role === "seller") {
         navigate("/seller/dashboard");
       } else {

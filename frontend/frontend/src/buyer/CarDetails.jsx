@@ -8,6 +8,12 @@ export default function CarDetails() {
   const [car, setCar] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // Inquiry modal states
+  const [showInquiry, setShowInquiry] = useState(false);
+  const [message, setMessage] = useState("");
+
+  const user = JSON.parse(localStorage.getItem("user"));
+
   useEffect(() => {
     fetch(`http://localhost:4000/api/listings/${id}`)
       .then((res) => res.json())
@@ -17,6 +23,30 @@ export default function CarDetails() {
       })
       .catch(() => setLoading(false));
   }, [id]);
+
+  const sendInquiry = () => {
+    if (!user) {
+      alert("Please login as a buyer first.");
+      return;
+    }
+
+    fetch("http://localhost:4000/api/inquiries", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        buyer_id: user.user_id,
+        listing_id: car.listing_id,
+        message: message,
+      }),
+    })
+      .then((res) => res.json())
+      .then(() => {
+        alert("Message sent to seller!");
+        setShowInquiry(false);
+        setMessage("");
+      })
+      .catch(() => alert("Failed to send message."));
+  };
 
   if (loading) {
     return <div style={styles.loading}>Loading...</div>;
@@ -36,11 +66,10 @@ export default function CarDetails() {
         {/* Car Image */}
         <div style={styles.left}>
           <img
-             src={`/car${car.listing_id}.jpg`}
-             alt={car.title}
-             style={styles.bigImg}
-         />
-
+            src={`/car${car.listing_id}.jpg`}
+            alt={car.title}
+            style={styles.bigImg}
+          />
 
           <div style={styles.infoBox}>
             <h2 style={styles.price}>{car.price.toLocaleString()} THB</h2>
@@ -59,12 +88,47 @@ export default function CarDetails() {
           <h3 style={styles.sellerTitle}>👤 Seller Information</h3>
           <p style={styles.detail}>Name: {car.seller_name}</p>
 
-          <button style={styles.contactBtn}>Contact Seller</button>
+          <button
+            style={styles.contactBtn}
+            onClick={() => setShowInquiry(true)}
+          >
+            Contact Seller
+          </button>
         </div>
       </div>
+
+      {/* Inquiry Modal */}
+      {showInquiry && (
+        <div style={styles.modalOverlay}>
+          <div style={styles.modal}>
+            <h2>Send Inquiry to Seller</h2>
+
+            <textarea
+              style={styles.textarea}
+              placeholder="Write your message..."
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+            />
+
+            <div style={styles.modalButtons}>
+              <button style={styles.sendBtn} onClick={sendInquiry}>
+                Send
+              </button>
+              <button
+                style={styles.cancelBtn}
+                onClick={() => setShowInquiry(false)}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+
+/* ----------- STYLES ----------- */
 
 const styles = {
   page: {
@@ -147,6 +211,56 @@ const styles = {
     background: "#1a73e8",
     color: "white",
     border: "none",
+    borderRadius: "8px",
+    cursor: "pointer",
+  },
+
+  /* Modal Styles */
+  modalOverlay: {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    width: "100%",
+    height: "100%",
+    background: "rgba(0,0,0,0.4)",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 999,
+  },
+  modal: {
+    background: "#fff",
+    padding: "25px",
+    borderRadius: "12px",
+    width: "400px",
+    boxShadow: "0 6px 20px rgba(0,0,0,0.2)",
+  },
+  textarea: {
+    width: "100%",
+    height: "120px",
+    padding: "10px",
+    borderRadius: "8px",
+    border: "1px solid #ccc",
+    marginTop: "10px",
+  },
+  modalButtons: {
+    marginTop: "15px",
+    display: "flex",
+    justifyContent: "space-between",
+  },
+  sendBtn: {
+    background: "#1a73e8",
+    color: "white",
+    border: "none",
+    padding: "10px 18px",
+    borderRadius: "8px",
+    cursor: "pointer",
+  },
+  cancelBtn: {
+    background: "#aaa",
+    color: "white",
+    border: "none",
+    padding: "10px 18px",
     borderRadius: "8px",
     cursor: "pointer",
   },
